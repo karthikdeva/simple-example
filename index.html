@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html ng-app="plunker">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Karthikdeva -Tree view Example</title>
+   
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <link href="font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="integralui.css" />
+    <link rel="stylesheet" href="integralui.checkbox.css" />
+    <link rel="stylesheet" href="integralui.treeview.css" />
+    <link rel="stylesheet" href="selectize.default.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="jquery.min.js" type="text/javascript"></script>
+    <script src="bootstrap.min.js"></script>
+    <script src="angular.min.js"></script>
+    <script src="selectize.min.js"></script>
+    <script src="angular-selectize.js"></script>
+    <script src="angular.integralui.min.js"></script>
+    <script src="angular.integralui.lists.min.js"></script>
+    <script src="angular.integralui.checkbox.min.js"></script>
+    <script src="angular.integralui.treeview.min.js"></script>
+    <script src="angular.integralui.treeview.min.js"></script>
+            <script src="api.js"></script>
+    <script src="app.js"></script>
+</head>
+
+<body ng-controller="MainCtrl">
+<div class="container" style="margin-top:50px">
+    <div class="row">
+        <section class="col-md-12 col-sm-12">
+        
+            <selectize config='selectizeConfig' options='filterGroupList' ng-model="filterGroupCollapsedListModel" ng-change="filterGroupChange"></selectize>
+            <div class="button-group">
+                <button class="btn btn-default apply-button" ng-click="applyCollapsedViewFilter()"><i class="fa fa-play"></i></button>
+                <button class="btn btn-default add-button" ng-click="filterGroupPanelToggle()"><i class="fa" ng-class="filterGroups.isShowPanel?'fa-minus': 'fa-plus'"></i></button>
+            </div>
+        </section>
+         <section class="col-md-12 col-sm-12">
+         <div class="form-group">
+         <p>{{filterGroupList.length}}</p> 
+         <b>{{filterGroupCollapsedListModel.length}}</b>
+            <!--  {{filterGroupCollapsedListModel}} -->
+         </div> <div class="form-group">
+             {{filterGroupActiveCollection.length}}
+         </div>
+         <div class="form-group">
+         {{filterGroupInactiveCollection.length}}
+         </div>
+         </section>
+        <section class="col-md-12 col-sm-12" ng-if="filterGroups.isShowPanel">
+            <div class="management-panel-section" ng-if="!filterGroups.isShowCreateEditPanel">
+                 <div class="row">
+                    <div class="col-md-12">
+                        <div class="caption caption-md mtop10 pull-left mright10">
+                            <span class="font-green-steel uppercase bold">Filter Groups</span>
+                        </div>
+                        <button class="btn pull-left mright10" id="ui-btn-selected" ng-class="filterGroups.selectedFilterGroup=='selected'?'btn-primary': 'btn-default'" ng-click="getSelectedFilterGroupData('selected')">Selected</button>
+                        <button class="btn pull-left mright10" id="ui-btn-all" ng-class="filterGroups.selectedFilterGroup=='All'?'btn-primary': 'btn-default'" ng-click="getSelectedFilterGroupData('All')">All</button>
+                        <button class="btn pull-left mright10" id="ui-btn-system" ng-class="filterGroups.selectedFilterGroup=='System'?'btn-primary': 'btn-default'" ng-click="getSelectedFilterGroupData('System')">System</button>
+                        <button class="btn pull-left mright10" id="ui-btn-personal" ng-class="filterGroups.selectedFilterGroup=='Personal'?'btn-primary': 'btn-default'" ng-click="getSelectedFilterGroupData('Personal')">Personal</button>
+                        <button class="btn pull-left mright10" id="ui-btn-favorites" ng-class="filterGroups.selectedFilterGroup=='Favorites'?'btn-primary': 'btn-default'" ng-click="getSelectedFilterGroupData('Favorites')">Favorites</button>
+                        <div class="pull-right">
+                            <button class="btn btn-primary pull-left mright10" id="ui-btn-new" ng-click="showCreateEditPanel(true)"><i class="fa fa-plus pright5"></i>New</button>
+                            <button class="btn btn-default pull-left ui-btn-apply mright10" id="ui-btn-apply" ng-click="applyFilter()">Apply</button>
+                            <button class="btn btn-default pull-left" id="ui-btn-cancel" ng-click="filterGroupPanelToggle()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+                <form name="filterGroups.form.managementPanel" novalidate>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="ptop15">
+                                <div class="alert alert-success" ng-if="showInfoMessage">
+                                    <strong>Success!</strong> {{notificationMessage}}
+                                </div>
+                                <table class="table table-bordered table-striped" ng-if="selectedPanelGroupData.length">
+                                    <thead class="thead-default">
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th class="action-column">Actions</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="filterItem in selectedPanelGroupData track by $index">
+                                            <th>
+                                                <input type="checkbox" id="{{filterItem.id}}" ng-model="filterItem.id" data-index="{{$index}}" data-favorite="{{filterItem.isFavorite}}" value="{{filterItem.id}}" ng-checked="checkfilterGroupstatus(filterItem)" data-filter-value="{{filterItem.filter}}" class="checkbox pright5" />
+                                                <i class="fa icon-start" ng-class="filterItem.isFavorite?'fa-star': 'fa-star-o'" ng-click="toggleFavorite(filterItem)"></i>{{filterItem.name}}</th>
+                                            <td>{{filterItem.description}}</td>
+                                            <td class="action-column">
+                                                <div class="dropdown">
+                                                    <label class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cog icon-action"></i>
+                                                    </label>
+                                                    <ul class="dropdown-menu mtop0 pull-right">
+                                                        <li ng-click="showCreateEditPanel(true,'edit',filterItem)" ng-class="{'disabled':filterItem.type=='System'}"><a href="javascript:;"><i class="fa fa-edit" ></i> Edit</a></li>
+                                                        <li ng-click="showCreateEditPanel(true,'copy',filterItem)"><a href="#"><i class="fa fa-copy"></i> Copy</a></li>
+                                                        <li ng-click="removeArrayItemByIndex(selectedPanelGroupData,$index)" ng-class="{'disabled':filterItem.type=='System'}"><a href="javascript:;"><i class="fa fa-trash-o"></i> Delete</a></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <label class="no-data align-center" ng-if="!selectedPanelGroupData.length">No data found!.</label>
+                            </div>
+                        </div>
+                    </div>
+                </form> 
+            </div>
+          <!--  <section class="create-panel col-md-12 col-sm-12" ng-if="filterGroups.isShowCreateEditPanel">
+                <div class="row">
+                    <form name="filterGroups.form.createEditPanel" novalidate>
+                        <header class="panel-header">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-4">
+                                    <input type="text" name="filter-group-name" id="filter-group-name" class="form-control" ng-model="selectedFilter.name" placeholder="Create filter group" required>
+                                </div>
+                                <div class="col-sm-5 col-md-5 btn-group">
+                                    <button class="btn  mright15" ng-class="filterGroups.activeTab=='tab1'?'btn-primary': 'btn-default'" ng-click="showTab('tab1')">End points</button>
+                                    <button class="btn mright15" ng-class="filterGroups.activeTab=='tab2'?'btn-primary': 'btn-default'" ng-click="showTab('tab2')">Calls</button>
+                                            <button class="btn mright15" ng-class="filterGroups.activeTab=='tab3'?'btn-primary': 'btn-default'" ng-click="showTab('tab3')">Far end</button>
+                                            <button class="btn mright15" ng-class="filterGroups.activeTab=='tab4'?'btn-primary': 'btn-default'" ng-click="showTab('tab4')">Advanced</button>
+                                </div>
+                                <div class="col-sm-3 col-md-3 pull-right">
+                                    <button class="btn btn-default pright10 pull-right" ng-click="showCreateEditPanel(false)">Cancel</button>
+                                    <button class="btn btn-default mright15 pull-right" ng-click="showCreateEditPanel(false,'save',selectedFilter)" ng-disabled="!filterGroups.form.createEditPanel.$dirty || filterGroups.form.createEditPanel.$invalid">Done</button>
+                                    <button class="btn btn-default mright15 pull-right" ng-click="showCreateEditPanel(false,'save',selectedFilter)" ng-disabled="!filterGroups.form.createEditPanel.$dirty || filterGroups.form.createEditPanel.$invalid">Add</button>
+                                </div>
+                            </div>
+                        </header>
+                        <article class="panel-content-section tab-content" cg-busy="[filterGroupPromise,removeFilterGroupPromise,createfilterGroupsPromise]">
+                            <div class="tab-pane" id="tab1" ng-class="{'active':filterGroups.activeTab=='tab1'}">
+                                <aside class="col-sm-3 pleftright0 sidebar-section">
+                                    <ul class="sidebar-list nav nav-pills">
+                                        <li class="active"><a data-toggle="tab" href="#hierarchy" ng-click="getHierarchy($event)">Hierarchy</a></li>
+                                        <li><a data-toggle="tab" href="#deviceAttribute" ng-click="getDeviceAttribute($event)">Device Attribute</a></li>
+                                        <li><a data-toggle="tab" href="#serviceAttribute" ng-click="getServiceAttribute($event)">Service Attribute</a></li>
+                                    </ul>
+                                </aside>
+                                <div class="col-sm-9 mid-section tab-content" cg-busy="[deviceHierarchiesPromise,hierarchiesPromise]">
+                                    <div class="tab-pane fade in active" id="hierarchy">
+                                        <div class="row">
+                                            <header class="filter-group-header">
+                                                <div class="col-md-4 col-sm-4">
+                                                    <div class="dropdown pull-left">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"> <span ng-bind="hierarchy.hierarchy_name || 'Select a Hierarchy'"></span>
+                                                            <span class="fa fa-caret-down pull-right"></span></button>
+                                                        <ul class="dropdown-menu">
+                                                            <li ng-repeat="item in hierarchy.nodes"><a href="#" ng-click="getDeviceHierarchy($event,item)">{{item.node_name}}</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-8 col-sm-8">
+                                                    <div query-assist="filterGroupFilterQuery" filterable="hierarchy.filterQuery"></div>
+                                                </div>
+                                            </header>
+                                            <div class="col-md-12 col-sm-12">
+                                                <iui-treeview name="{{deviceHierarchyTreeName}}" class="directive" items="deviceHierarchyItems" show-check-boxes="true" checkbox-settings="checkBoxSettings" item-checkstate-changing="itemCheckStateChanging(e)"></iui-treeview>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="deviceAttribute">
+                                        <h2>Device attribute</h2>
+                                    </div>
+                                    <div class="tab-pane fade" id="serviceAttribute">
+                                        <h2>Service attribute</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tab2" ng-class="{'active':filterGroups.activeTab=='tab2'}" ng-if="filterGroups.activeTab=='tab2'">
+                                <aside class="col-sm-3 pleftright0 sidebar-section">
+                                    <ul class="sidebar-list  nav nav-pills">
+                                        <li><a data-toggle="tab" href="#media">Media & Protocol</a></li>
+                                        <li class="active"><a data-toggle="tab" href="#time">Time</a></li>
+                                        <li><a data-toggle="tab" href="#network">Network</a></li>
+                                        <li><a data-toggle="tab" href="#quality">Quality</a></li>
+                                        <li><a data-toggle="tab" href="#service">Service</a></li>
+                                    </ul>
+                                </aside>
+                                <div class="col-sm-9 mid-section tab-content">
+                                    <div class="tab-pane fade" id="media">
+                                    </div>
+                                    <div class="tab-pane fade in active" id="time">
+                                        <header class="title-section">
+                                            <h4 class="heading">Time</h4>
+                                            <label>Filter calls based on time parameters</label>
+                                        </header>
+                                        <div class="form-content form-inline">
+                                            <label class="form-group">
+                                                <span class="pright10">Duration</span>
+                                                <i class="fa fa-question-circle-o" title="Duration"></i>
+                                            </label>
+                                            <div class="form-group pleftright10">
+                                                <div class="dropdown pull-left">
+                                                    <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown"> <span ng-bind="call.selectedType.label" ng-model="call.selectedType.label"></span>
+                                                        <span class="fa fa-caret-down pull-right"></span></button>
+                                                    <ul class="dropdown-menu">
+                                                        <li ng-repeat="item in call.types">
+                                                            <a href="#" ng-click="setCallType($event,item)"><i class="fa v-divider" ng-class="{'fa-check':item.label==call.selectedType.label}" aria-hidden="true"></i><span ng-bind="item.label"></span></a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div class="form-group pright10">
+                                                <input type="text" class="form-control input-sm" name="from" ng-model="call.inputTimeValue1" required>
+                                                <span class="pleft10" ng-if="call.selectedType.label=='is between'">and</span>
+                                            </div>
+                                            <div class="form-group" ng-if="call.selectedType.label=='is between'">
+                                                <input type="text" ng-model="call.inputTimeValue2" class="form-control input-sm" name="to" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="network">
+                                    </div>
+                                    <div class="tab-pane fade" id="quality">
+                                    </div>
+                                    <div class="tab-pane fade" id="service">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tab3" ng-class="{'active':filterGroups.activeTab=='tab3'}" ng-if="filterGroups.activeTab=='tab3'">
+                                <aside class="col-sm-3 pleftright0 sidebar-section" cg-busy="[deviceHierarchiesPromise,hierarchiesPromise]">
+                                    <ul class="sidebar-list nav nav-pills">
+                                        <li class="active"><a data-toggle="tab" href="#farEndHierarchy" ng-click="getHierarchy($event)">Hierarchy</a></li>
+                                        <li><a data-toggle="tab" href="#farEndDeviceAttribute" ng-click="getDeviceAttribute($event)">Device Attribute</a></li>
+                                        <li><a data-toggle="tab" href="#farEndServiceAttribute" ng-click="getServiceAttribute($event)">Service Attribute</a></li>
+                                    </ul>
+                                </aside>
+                                <div class="col-sm-9 mid-section tab-content">
+                                    <div class="tab-pane fade in active" id="farEndHierarchy">
+                                        <iui-treeview name="{{deviceHierarchyTreeName}}" class="directive" items="deviceHierarchyItems"></iui-treeview>
+                                    </div>
+                                    <div class="tab-pane fade" id="farEndDeviceAttribute">
+                                    </div>
+                                    <div class="tab-pane fade" id="farEndServiceAttribute">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane pad10" id="tab4" ng-class="{'active':filterGroups.activeTab=='tab4'}" ng-if="filterGroups.activeTab=='tab4'">
+                                <textarea class="form-control textarea mbot10" ng-model="selectedFilter.filter" placeholder="Filter"></textarea>
+                                <textarea class="form-control textarea" ng-model="selectedFilter.description" placeholder="Description"></textarea>
+                            </div>
+                        </article>
+                    </form>
+                </div>
+            </section>
+        </section>
+    </div>
+    </div>
+    <!--  <section class="create-panel col-md-12 col-sm-12">
+        <div class="row">
+            <form name="filtergroups.form.createEditPanel" novalidate>
+                <article class="panel-content-section tab-content">
+                    <div class="tab-pane fade in active " id="tab1">
+                        <div class="col-sm-12 col-md-12 mid-section tab-content">
+                            <div class="tab-pane fade in active" id="hierarchy">
+                                <div class="row">
+                                    <header class="filter-group-header">
+                                        <div class="col-md-4 col-sm-4">
+                                            <input type="text" name="filter-group-name" id="filter-group-name" class="form-control" ng-model="selectedFilter.name" placeholder="Create filter group" required>
+                                        </div>
+                                        <div class="col-md-2 col-sm-2 pull-right">
+                                            <button class="btn btn-default pull-right" type="button" ng-click="applyForm()">Apply</button>
+                                        </div>
+                                    </header>
+                                    <div class="col-md-6 col-sm-6">
+                                        <iui-treeview name="{{deviceHierarchyTreeName}}" class="directive" items="deviceHierarchyItems" show-check-boxes="true" checkbox-settings="checkBoxSettings" item-checkstate-changing="itemCheckStateChanging(e)"></iui-treeview>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="form-group">
+                                            <textarea class="form-control textarea mbot10" ng-model="selectedFilter.filter" placeholder="Filter" readonly></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <textarea class="form-control textarea" ng-model="selectedFilter.description" placeholder="Description"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-12 tab-content">
+                            <div class="form-group">
+                                <textarea class="form-control largeTextarea mbot10" ng-model="selectedFilter.filterGroups" placeholder="Personal filter" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </form>
+        </div>
+    </section> -->
+</body>
+
+</html>
